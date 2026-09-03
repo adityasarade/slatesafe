@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -9,7 +10,9 @@ from fastapi.staticfiles import StaticFiles
 from .agent import build_release_agent, evaluate_release_check
 from .models import ReleaseCheckRequest, ReleaseDecision
 
-ROOT = Path(__file__).resolve().parents[2]
+# Editable local installs keep assets beside the repository root; the container
+# installs the package into site-packages and explicitly points back to /app.
+ROOT = Path(os.getenv("SLATESAFE_ROOT", Path(__file__).resolve().parents[2]))
 app = FastAPI(title="SlateSafe", version="0.1.0")
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 

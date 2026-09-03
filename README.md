@@ -36,6 +36,14 @@ uv run uvicorn slatesafe.app:app --reload
 
 Open `http://127.0.0.1:8000`. The included demo path is deterministic and uses fictional records so it can be reviewed without credentials. Before submission, configure real services and use the live `ClickHouseMcpGateway` in the deployed Cloud Run service.
 
+### Run the actual MCP path without cloud spend
+
+For a reproducible local ClickHouse ledger and the official MCP runtime,
+run `docker compose up --build` and open `http://127.0.0.1:8010`.
+See [the zero-cost local demo guide](docs/LOCAL-MCP-DEMO.md).
+This enables the live ledger switch but intentionally leaves the Gemini call
+off until a confirmed spend-safe Google Cloud path is available.
+
 ## Required production environment
 
 ```bash

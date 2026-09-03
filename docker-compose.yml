@@ -1,0 +1,37 @@
+services:
+  slatesafe:
+    build: .
+    ports:
+      - "8010:8080"
+    environment:
+      GOOGLE_GENAI_USE_VERTEXAI: "true"
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:-}
+      GOOGLE_CLOUD_LOCATION: ${GOOGLE_CLOUD_LOCATION:-us-central1}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      SLATESAFE_LIVE_GEMINI: ${SLATESAFE_LIVE_GEMINI:-false}
+      SLATESAFE_LIVE_LEDGER: "true"
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_USER: slatesafe_agent
+      CLICKHOUSE_PASSWORD: slatesafe_demo
+      CLICKHOUSE_DATABASE: slatesafe
+      CLICKHOUSE_SECURE: "false"
+      CLICKHOUSE_VERIFY: "false"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.7
+    environment:
+      CLICKHOUSE_DB: slatesafe
+      CLICKHOUSE_USER: slatesafe_agent
+      CLICKHOUSE_PASSWORD: slatesafe_demo
+    ports:
+      - "8123:8123"
+    volumes:
+      - ./docker/clickhouse/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
