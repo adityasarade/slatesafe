@@ -7,7 +7,7 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .agent import build_release_agent, evaluate_release_check
+from .agent import build_release_agent, evaluate_release_check, public_byok_enabled
 from .models import ReleaseCheckRequest, ReleaseDecision
 
 # Editable local installs keep assets beside the repository root; the container
@@ -35,6 +35,18 @@ async def release_check(
     """Evaluate without accepting credentials in the URL or request body."""
     if gemini_api_key is not None and not 20 <= len(gemini_api_key) <= 512:
         raise HTTPException(status_code=400, detail="Invalid Gemini API key format.")
+    # This check deliberately happens before evaluating the release: on a live
+    # deployment that evaluation would query ClickHouse. Anonymous callers must
+    # not be able to consume either the operator's Gemini or ledger resources.
+    if (
+        public_byok_enabled()
+        and os.getenv("SLATESAFE_LIVE_GEMINI", "false").lower() == "true"
+        and not gemini_api_key
+    ):
+        raise HTTPException(
+            status_code=428,
+            detail="This public deployment requires your own Gemini API key for AI handoffs.",
+        )
     try:
         return await evaluate_release_check(request, gemini_api_key)
     except PermissionError as error:

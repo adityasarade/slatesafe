@@ -34,9 +34,9 @@ committed to the repository or exposed to the browser.
    Gemini API key is present, and the runtime service account has no Vertex AI
    user role.
 3. Serve only over Cloud Run HTTPS; do not terminate TLS at an untrusted proxy.
-4. Run one request without a key. It must return HTTP 428 before any Gemini
-   call. Then run a request with a visitor-controlled key and confirm the
-   downloaded packet contains no key.
+4. Run one request without a key. It must return HTTP 428 before any Gemini or
+   ClickHouse MCP call. Then run a request with a visitor-controlled key and
+   confirm the downloaded packet contains no key.
 5. Never turn on `SLATESAFE_LIVE_GEMINI` without `SLATESAFE_PUBLIC_BYOK` for a
    public service. That private operator mode is only for a controlled demo.
 

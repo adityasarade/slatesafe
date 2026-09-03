@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from slatesafe import agent
+from slatesafe import app as web
 from slatesafe.agent import build_release_agent, deterministic_release_check
 from slatesafe.app import app
 from slatesafe.models import EvidenceMode, ReleaseCheckRequest, Severity
@@ -50,9 +51,15 @@ def test_adk_agent_exposes_only_the_read_only_clearance_tool() -> None:
     assert agent.tools[0].__name__ == "query_clearance_ledger"
 
 
-def test_public_byok_fails_closed_before_any_gemini_call(monkeypatch) -> None:
+def test_public_byok_fails_closed_before_any_operator_resource_call(monkeypatch) -> None:
     monkeypatch.setenv("SLATESAFE_LIVE_GEMINI", "true")
     monkeypatch.setenv("SLATESAFE_PUBLIC_BYOK", "true")
+    monkeypatch.setenv("SLATESAFE_LIVE_LEDGER", "true")
+
+    async def should_not_run(*_args, **_kwargs):
+        raise AssertionError("The request reached the operator-backed evaluator.")
+
+    monkeypatch.setattr(web, "evaluate_release_check", should_not_run)
 
     response = TestClient(app).post("/api/release-check", json=REQUEST)
 
