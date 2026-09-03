@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SlateSafe — Release Readiness</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">SLATESAFE / RELEASE CONTROL ROOM</p>
+      <h1>Know what must change<br />before the premiere.</h1>
+      <p class="subhead">Gemini reviews the cut. ClickHouse provides the evidence. Your producer gets a defensible greenlight decision.</p>
+    </header>
+    <main>
+      <section class="panel intake">
+        <div class="panel-title"><span>01</span> Release brief</div>
+        <label>Project title <input id="title" value="The Last Harbor — Episode 04" /></label>
+        <div class="grid">
+          <label>Territory <input id="territory" value="IN" maxlength="8" /></label>
+          <label>Release date <input id="release-date" value="2026-10-15" type="date" /></label>
+        </div>
+        <label>Assets in rough cut <input id="assets" value="NEON-CAB-07, SONG-HARBOR-21, POSTER-ORBIT-03" /></label>
+        <label>Script / scene context
+          <textarea id="script">INT. HARBOR DINER — NIGHT. The camera catches a bright taxi panel outside. Nora drops a needle on an old harbor song while a vintage space poster fills the background.</textarea>
+        </label>
+        <button id="check">Run release check <span>→</span></button>
+        <p class="fineprint">Demo data is fictional. The production path calls Gemini through Google Cloud Agent Builder and queries the clearance ledger through the official ClickHouse MCP server.</p>
+      </section>
+      <section class="panel decision" id="decision">
+        <div class="panel-title"><span>02</span> Greenlight packet</div>
+        <div class="empty">Run a check to create an evidence-backed release packet.</div>
+      </section>
+    </main>
+    <template id="result-template">
+      <div class="status-row"><div><p class="status-label">Release decision</p><h2></h2><p class="one-line"></p></div><div class="confidence"><strong></strong><small>evidence confidence</small></div></div>
+      <div class="trace"></div>
+      <div class="findings"></div>
+    </template>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
