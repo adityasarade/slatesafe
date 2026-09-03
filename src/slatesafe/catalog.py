@@ -43,10 +43,10 @@ def policy_findings(request: ReleaseCheckRequest) -> list[Finding]:
             findings.append(
                 Finding(
                     asset_id=asset_id,
-                    timecode="00:00:00",
+                    timecode=request.asset_timecodes.get(asset_id, "Not supplied"),
                     category="provenance",
                     detail="No clearance record exists in the rights ledger.",
-                    severity=Severity.REVIEW,
+                    severity=Severity.BLOCKER,
                     evidence="ClickHouse lookup returned no active record.",
                     remediation="Attach source and clearance evidence before picture lock.",
                 )
@@ -59,7 +59,7 @@ def policy_findings(request: ReleaseCheckRequest) -> list[Finding]:
             findings.append(
                 Finding(
                     asset_id=asset_id,
-                    timecode="00:01:42",
+                    timecode=request.asset_timecodes.get(asset_id, "Not supplied"),
                     category=record["category"],
                     detail=f"Clearance is {reason}.",
                     severity=Severity.BLOCKER,
@@ -74,7 +74,7 @@ def policy_findings(request: ReleaseCheckRequest) -> list[Finding]:
             findings.append(
                 Finding(
                     asset_id=asset_id,
-                    timecode="00:01:42",
+                    timecode=request.asset_timecodes.get(asset_id, "Not supplied"),
                     category=record["category"],
                     detail="Clearance record covers this release.",
                     severity=Severity.CLEAR,

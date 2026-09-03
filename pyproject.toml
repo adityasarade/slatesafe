@@ -11,6 +11,7 @@ dependencies = [
   "google-adk>=1.0.0",
   "google-genai>=1.0.0",
   "mcp>=1.0.0",
+  "mcp-clickhouse==0.5.0",
   "pydantic>=2.9,<3",
   "uvicorn[standard]>=0.30,<1",
 ]

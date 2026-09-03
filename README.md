@@ -19,8 +19,8 @@ SlateSafe makes this operational rather than conversational:
 
 ## Contest compliance
 
-- **Google Cloud / Gemini:** `google-adk` defines the Gemini release-counsel agent. The application must be run with Google Cloud Application Default Credentials and Vertex AI configuration in production.
-- **ClickHouse:** `slatesafe.clickhouse_mcp.ClickHouseMcpGateway` launches the official `mcp-clickhouse` server and invokes `run_query` at runtime.
+- **Google Cloud / Gemini:** `google-adk` defines the Gemini release-counsel agent. In the live path, the agent calls its read-only clearance-evidence tool before creating a constrained producer handoff. The application must be run with Google Cloud Application Default Credentials and Vertex AI configuration in production.
+- **ClickHouse:** `slatesafe.clickhouse_mcp.ClickHouseMcpGateway` launches the pinned official `mcp-clickhouse` server and invokes `run_query` at runtime.
 - **No other AI provider:** the project uses only Gemini through Google Cloud. The deterministic policy layer is standard application code, not an AI service.
 - **Open source:** Apache-2.0 license is included at repository root.
 
@@ -84,6 +84,15 @@ ORDER BY (asset_id, expires_at);
 uv run ruff check .
 uv run pytest
 ```
+
+## Competition proof
+
+The [competition audit and video runbook](docs/COMPETITION-AUDIT.md) maps the
+functional product to the Agentic Cinema ClickHouse-track requirements and
+keeps the production claims evidence-based.
+
+The submission thumbnail is an original, code-rendered SVG in `assets/`; no
+non-Google generative AI is used by SlateSafe.
 
 ## Deployment checklist
 

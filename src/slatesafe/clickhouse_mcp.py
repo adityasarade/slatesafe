@@ -33,8 +33,8 @@ class ClickHouseMcpGateway:
     async def query(self, sql: str) -> str:
         """Execute a read-only query through ClickHouse's official MCP server."""
         params = StdioServerParameters(
-            command=os.getenv("UV_BINARY", "uv"),
-            args=["run", "--with", "mcp-clickhouse", "--python", "3.11", "mcp-clickhouse"],
+            command=os.getenv("MCP_CLICKHOUSE_BINARY", "mcp-clickhouse"),
+            args=[],
             env=self._env(),
         )
         async with AsyncExitStack() as stack:
@@ -45,11 +45,11 @@ class ClickHouseMcpGateway:
             return "\n".join(getattr(block, "text", str(block)) for block in result.content)
 
     async def rights_window(self, asset_ids: list[str], territory: str, release_date: str) -> str:
+        """Return all ledger records so policy can explain a failed condition exactly."""
         quoted_assets = ", ".join("'{}'".format(asset.replace("'", "''")) for asset in asset_ids)
         return await self.query(
-            "SELECT asset_id, category, territories, expires_at "
+            "SELECT asset_id, category, territories, expires_at, release_date, evidence_url "
             "FROM clearance_events "
             f"WHERE asset_id IN ({quoted_assets}) "
-            f"AND expires_at >= toDate('{release_date}') "
-            f"AND has(territories, '{territory.upper()}')"
+            "ORDER BY asset_id, expires_at DESC"
         )

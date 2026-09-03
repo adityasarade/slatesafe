@@ -16,7 +16,7 @@ SlateSafe turns that late-stage scramble into a clear production decision: **hol
 
 ## How we built it
 
-- **Google Cloud / Gemini:** `google-adk` creates the release-counsel agent. The live path uses Google Cloud credentials and a Gemini model to produce a constrained producer summary from verified evidence.
+- **Google Cloud / Gemini:** `google-adk` creates the release-counsel agent. In the live path, Gemini calls a read-only clearance-evidence tool before producing a constrained producer handoff from verified evidence.
 - **ClickHouse:** `mcp-clickhouse`, ClickHouse's official MCP server, is launched at runtime and called with `run_query`. It reads the current clearance ledger using a least-privilege, read-only account.
 - **Product:** FastAPI serves the workflow; a purpose-built HTML/CSS/JavaScript interface lets a nontechnical release producer understand exactly why a release is held.
 - **Safety:** the application treats the ClickHouse result as the authority. Gemini can explain an outcome but cannot create a clearance record or change a hold into a clear.

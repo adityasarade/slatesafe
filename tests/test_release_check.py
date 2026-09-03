@@ -1,5 +1,5 @@
-from slatesafe.agent import deterministic_release_check
-from slatesafe.models import ReleaseCheckRequest, Severity
+from slatesafe.agent import build_release_agent, deterministic_release_check
+from slatesafe.models import EvidenceMode, ReleaseCheckRequest, Severity
 
 
 def test_expired_clearance_holds_release() -> None:
@@ -13,10 +13,13 @@ def test_expired_clearance_holds_release() -> None:
         )
     )
     assert decision.status is Severity.BLOCKER
+    assert decision.packet_id.startswith("SS-")
+    assert decision.evidence_mode is EvidenceMode.DEMO_FIXTURE
+    assert decision.evaluated_at.tzinfo is not None
     assert any(finding.asset_id == "NEON-CAB-07" for finding in decision.findings)
 
 
-def test_unknown_asset_requires_provenance_review() -> None:
+def test_unknown_asset_fails_closed_for_provenance() -> None:
     decision = deterministic_release_check(
         ReleaseCheckRequest(
             title="The Last Harbor",
@@ -26,4 +29,10 @@ def test_unknown_asset_requires_provenance_review() -> None:
             asset_ids=["UNTRACKED-PROP-99"],
         )
     )
-    assert decision.status is Severity.REVIEW
+    assert decision.status is Severity.BLOCKER
+
+
+def test_adk_agent_exposes_only_the_read_only_clearance_tool() -> None:
+    agent = build_release_agent()
+    assert len(agent.tools) == 1
+    assert agent.tools[0].__name__ == "query_clearance_ledger"

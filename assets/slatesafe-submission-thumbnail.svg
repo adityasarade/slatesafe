@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1000" viewBox="0 0 1500 1000" role="img" aria-labelledby="title desc">
+  <title id="title">SlateSafe release-readiness control room</title>
+  <desc id="desc">A code-rendered product graphic showing a held release packet backed by Gemini and ClickHouse evidence.</desc>
+  <rect width="1500" height="1000" fill="#17261d"/>
+  <circle cx="1310" cy="170" r="320" fill="#d2f25f" opacity=".18"/>
+  <circle cx="1390" cy="880" r="360" fill="#ee6556" opacity=".12"/>
+  <text x="104" y="116" fill="#d2f25f" font-family="Arial, sans-serif" font-size="30" font-weight="700" letter-spacing="6">SLATESAFE / RELEASE CONTROL ROOM</text>
+  <text x="100" y="252" fill="#f4f0e8" font-family="Georgia, serif" font-size="100" font-weight="700">Know what must change</text>
+  <text x="100" y="360" fill="#f4f0e8" font-family="Georgia, serif" font-size="100" font-weight="700">before the premiere.</text>
+  <text x="105" y="436" fill="#cbd0ba" font-family="Arial, sans-serif" font-size="30">Evidence-first release clearance for film and episodic delivery.</text>
+  <rect x="100" y="530" width="1300" height="330" rx="18" fill="#f4f0e8"/>
+  <rect x="100" y="530" width="500" height="330" rx="18" fill="#e5e9d7"/>
+  <text x="145" y="594" fill="#60725d" font-family="Arial, sans-serif" font-size="21" font-weight="700" letter-spacing="3">RELEASE PACKET / SS-7FA3AEE3E8</text>
+  <text x="145" y="688" fill="#ee6556" font-family="Georgia, serif" font-size="92" font-weight="700">HOLD</text>
+  <text x="145" y="738" fill="#17261d" font-family="Arial, sans-serif" font-size="26">1 clearance blocker requires action.</text>
+  <rect x="650" y="578" width="700" height="82" rx="10" fill="#fff" stroke="#cbd0ba" stroke-width="3"/>
+  <rect x="650" y="690" width="700" height="82" rx="10" fill="#fff" stroke="#cbd0ba" stroke-width="3"/>
+  <circle cx="700" cy="619" r="18" fill="#ee6556"/>
+  <circle cx="700" cy="731" r="18" fill="#4f9f65"/>
+  <text x="745" y="627" fill="#17261d" font-family="Arial, sans-serif" font-size="28" font-weight="700">LOGO-COLA-22 — attach valid India clearance</text>
+  <text x="745" y="739" fill="#17261d" font-family="Arial, sans-serif" font-size="28" font-weight="700">MUSIC-NEON-07 — active rights window found</text>
+  <text x="105" y="938" fill="#f4f0e8" font-family="Arial, sans-serif" font-size="26">GEMINI PRODUCER HANDOFF  •  CLICKHOUSE MCP EVIDENCE  •  NO HALLUCINATED GREENLIGHTS</text>
+</svg>

@@ -4,8 +4,8 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY src ./src
 COPY static ./static
-# The live ClickHouse gateway launches the official MCP server with `uv run`.
-RUN pip install --no-cache-dir . uv
+# The pinned official MCP server is installed into the image with the app.
+RUN pip install --no-cache-dir .
 
 ENV PORT=8080
 ENV SLATESAFE_ROOT=/app
