@@ -23,7 +23,8 @@ function render(decision) {
   view.querySelector(".one-line").textContent = decision.one_line;
   view.querySelector(".confidence strong").textContent = `${decision.confidence}%`;
   view.querySelector(".trace").innerHTML = `<p>DECISION TRACE</p>${decision.trace.map((step, i) => `<div><span>0${i + 1}</span>${step}</div>`).join("")}`;
-  view.querySelector(".findings").innerHTML = `<p>FINDINGS / ${decision.findings.length}</p>${decision.findings.map(findingCard).join("")}`;
+  const summary = decision.gemini_summary ? `<div class="gemini-summary"><b>Gemini producer handoff</b>${decision.gemini_summary}</div>` : "";
+  view.querySelector(".findings").innerHTML = `${summary}<p>FINDINGS / ${decision.findings.length}</p>${decision.findings.map(findingCard).join("")}`;
   const result = get("decision"); result.replaceChildren(view);
 }
 

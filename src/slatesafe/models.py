@@ -36,3 +36,4 @@ class ReleaseDecision(BaseModel):
     confidence: int = Field(ge=0, le=100)
     findings: list[Finding]
     trace: list[str]
+    gemini_summary: str | None = None

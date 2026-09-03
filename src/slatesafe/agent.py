@@ -6,6 +6,8 @@ import json
 import os
 
 from google.adk.agents import LlmAgent
+from google.adk.runners import InMemoryRunner
+from google.genai import types
 
 from .catalog import policy_findings
 from .clickhouse_mcp import ClickHouseMcpGateway
@@ -52,11 +54,40 @@ def deterministic_release_check(request: ReleaseCheckRequest):
         confidence=confidence,
         findings=findings,
         trace=[
-            "Gemini Enterprise Agent Platform: release-counsel policy initialized.",
+            "Gemini Enterprise Agent Platform: release-counsel agent configured for the live run.",
             "ClickHouse MCP: clearance-events query requested.",
             "Evidence-only decision composed; no rights status was inferred without a ledger record.",
         ],
     )
+
+
+async def gemini_release_summary(request: ReleaseCheckRequest, findings: list[Finding]) -> str:
+    """Run ADK only after the evidence-backed decision is known.
+
+    Gemini can explain verified evidence in producer language but is never allowed
+    to alter a clearance outcome.
+    """
+    evidence = "\n".join(
+        f"- {item.asset_id}: {item.severity.value}; {item.detail}; evidence: {item.evidence}; "
+        f"next action: {item.remediation}"
+        for item in findings
+    )
+    runner = InMemoryRunner(agent=build_release_agent(), app_name="slatesafe")
+    session = await runner.session_service.create_session(
+        app_name="slatesafe", user_id="release-producer"
+    )
+    prompt = (
+        f"Release: {request.title}\nTerritory: {request.territory}\n"
+        f"Release date: {request.release_date}\nVerified ledger evidence:\n{evidence}\n\n"
+        "Write a concise producer-facing handoff in no more than 70 words. Do not add facts."
+    )
+    message = types.Content(role="user", parts=[types.Part.from_text(text=prompt)])
+    async for event in runner.run_async(
+        user_id="release-producer", session_id=session.id, new_message=message
+    ):
+        if event.is_final_response() and event.content and event.content.parts:
+            return "".join(part.text or "" for part in event.content.parts).strip()
+    raise RuntimeError("Gemini did not return a final release summary.")
 
 
 async def evaluate_release_check(request: ReleaseCheckRequest):
@@ -67,7 +98,11 @@ async def evaluate_release_check(request: ReleaseCheckRequest):
     service always has a live ClickHouse-backed decision path.
     """
     if os.getenv("SLATESAFE_LIVE_LEDGER", "false").lower() != "true":
-        return deterministic_release_check(request)
+        decision = deterministic_release_check(request)
+        if os.getenv("SLATESAFE_LIVE_GEMINI", "false").lower() == "true":
+            decision.gemini_summary = await gemini_release_summary(request, decision.findings)
+            decision.trace[0] = "Gemini Enterprise Agent Platform: ADK release-counsel call completed."
+        return decision
 
     raw_result = await ClickHouseMcpGateway().rights_window(
         request.asset_ids, request.territory, request.release_date
@@ -102,7 +137,7 @@ async def evaluate_release_check(request: ReleaseCheckRequest):
     blockers = [finding for finding in findings if finding.severity is Severity.BLOCKER]
     from .models import ReleaseDecision
 
-    return ReleaseDecision(
+    decision = ReleaseDecision(
         title=request.title,
         status=Severity.BLOCKER if blockers else Severity.CLEAR,
         one_line=(
@@ -113,8 +148,12 @@ async def evaluate_release_check(request: ReleaseCheckRequest):
         confidence=99,
         findings=findings,
         trace=[
-            "Gemini Enterprise Agent Platform: release-counsel policy initialized.",
+            "Gemini Enterprise Agent Platform: release-counsel agent configured for the live run.",
             "ClickHouse MCP: official mcp-clickhouse run_query completed against clearance_events.",
             "Evidence-only decision composed from the live query result.",
         ],
     )
+    if os.getenv("SLATESAFE_LIVE_GEMINI", "false").lower() == "true":
+        decision.gemini_summary = await gemini_release_summary(request, decision.findings)
+        decision.trace[0] = "Gemini Enterprise Agent Platform: ADK release-counsel call completed."
+    return decision
