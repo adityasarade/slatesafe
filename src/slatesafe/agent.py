@@ -9,8 +9,9 @@ from datetime import UTC, datetime
 from hashlib import sha256
 
 from google.adk.agents import LlmAgent
+from google.adk.models import Gemini
 from google.adk.runners import InMemoryRunner
-from google.genai import types
+from google.genai import Client, types
 
 from .catalog import RIGHTS_CATALOG, policy_findings
 from .clickhouse_mcp import ClickHouseMcpGateway
@@ -38,16 +39,24 @@ async def query_clearance_ledger(
     return json.loads(raw_result)
 
 
-def build_release_agent() -> LlmAgent:
+def build_release_agent(gemini_api_key: str | None = None) -> LlmAgent:
     """Create the Agent Development Kit agent used in the deployed service.
 
     Runtime execution is intentionally constrained: policy facts come from the
     ClickHouse MCP tool; Gemini explains findings but is never allowed to invent
     a clearance status.
     """
+    model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    # A public deployment can supply a request-scoped Google AI client. This
+    # avoids using the Cloud Run service identity or any operator API key for a
+    # visitor request. The key exists in memory only and is never logged or stored.
+    model: str | Gemini = model_name
+    if gemini_api_key:
+        model = Gemini(model=model_name, client=Client(api_key=gemini_api_key))
+
     return LlmAgent(
         name="release_counsel",
-        model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        model=model,
         instruction=(
             "You are SlateSafe's release counsel. First call query_clearance_ledger once using the "
             "release brief supplied by the producer. Then summarize only verified clearance evidence. "
@@ -90,7 +99,16 @@ def deterministic_release_check(request: ReleaseCheckRequest):
     )
 
 
-async def gemini_release_summary(request: ReleaseCheckRequest, findings: list[Finding]) -> str:
+def public_byok_enabled() -> bool:
+    """Whether this deployment must never spend an operator's Gemini credits."""
+    return os.getenv("SLATESAFE_PUBLIC_BYOK", "false").lower() == "true"
+
+
+async def gemini_release_summary(
+    request: ReleaseCheckRequest,
+    findings: list[Finding],
+    gemini_api_key: str | None = None,
+) -> str:
     """Run ADK only after the evidence-backed decision is known.
 
     Gemini can explain verified evidence in producer language but is never allowed
@@ -101,7 +119,14 @@ async def gemini_release_summary(request: ReleaseCheckRequest, findings: list[Fi
         f"next action: {item.remediation}"
         for item in findings
     )
-    runner = InMemoryRunner(agent=build_release_agent(), app_name="slatesafe")
+    if public_byok_enabled() and not gemini_api_key:
+        raise PermissionError(
+            "This public deployment requires your own Gemini API key for AI handoffs."
+        )
+
+    runner = InMemoryRunner(
+        agent=build_release_agent(gemini_api_key=gemini_api_key), app_name="slatesafe"
+    )
     session = await runner.session_service.create_session(
         app_name="slatesafe", user_id="release-producer"
     )
@@ -122,7 +147,9 @@ async def gemini_release_summary(request: ReleaseCheckRequest, findings: list[Fi
     raise RuntimeError("Gemini did not return a final release summary.")
 
 
-async def evaluate_release_check(request: ReleaseCheckRequest):
+async def evaluate_release_check(
+    request: ReleaseCheckRequest, gemini_api_key: str | None = None
+):
     """Evaluate with ClickHouse MCP when configured; otherwise use the demo ledger.
 
     `SLATESAFE_LIVE_LEDGER=true` is deliberately an explicit switch: reviewers
@@ -132,7 +159,9 @@ async def evaluate_release_check(request: ReleaseCheckRequest):
     if os.getenv("SLATESAFE_LIVE_LEDGER", "false").lower() != "true":
         decision = deterministic_release_check(request)
         if os.getenv("SLATESAFE_LIVE_GEMINI", "false").lower() == "true":
-            decision.gemini_summary = await gemini_release_summary(request, decision.findings)
+            decision.gemini_summary = await gemini_release_summary(
+                request, decision.findings, gemini_api_key
+            )
             decision.trace[0] = "Gemini Enterprise Agent Platform: ADK release-counsel call completed."
         return decision
 
@@ -227,6 +256,8 @@ async def evaluate_release_check(request: ReleaseCheckRequest):
         evaluated_at=datetime.now(UTC),
     )
     if os.getenv("SLATESAFE_LIVE_GEMINI", "false").lower() == "true":
-        decision.gemini_summary = await gemini_release_summary(request, decision.findings)
+        decision.gemini_summary = await gemini_release_summary(
+            request, decision.findings, gemini_api_key
+        )
         decision.trace[0] = "Gemini Enterprise Agent Platform: ADK release-counsel call completed."
     return decision

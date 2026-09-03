@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -28,5 +28,14 @@ async def health() -> dict[str, str]:
 
 
 @app.post("/api/release-check", response_model=ReleaseDecision)
-async def release_check(request: ReleaseCheckRequest) -> ReleaseDecision:
-    return await evaluate_release_check(request)
+async def release_check(
+    request: ReleaseCheckRequest,
+    gemini_api_key: str | None = Header(default=None, alias="X-SlateSafe-Gemini-Key"),
+) -> ReleaseDecision:
+    """Evaluate without accepting credentials in the URL or request body."""
+    if gemini_api_key is not None and not 20 <= len(gemini_api_key) <= 512:
+        raise HTTPException(status_code=400, detail="Invalid Gemini API key format.")
+    try:
+        return await evaluate_release_check(request, gemini_api_key)
+    except PermissionError as error:
+        raise HTTPException(status_code=428, detail=str(error)) from error

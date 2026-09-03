@@ -44,8 +44,14 @@ function render(decision) {
 get("check").addEventListener("click", async () => {
   const button = get("check"); button.disabled = true; button.textContent = "Querying release ledger…";
   try {
-    const response = await fetch("/api/release-check", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify(formValue())});
-    if (!response.ok) throw new Error("The release brief needs valid fields.");
+    const geminiKey = get("gemini-key").value.trim();
+    const headers = {"content-type": "application/json"};
+    if (geminiKey) headers["X-SlateSafe-Gemini-Key"] = geminiKey;
+    const response = await fetch("/api/release-check", {method: "POST", headers, body: JSON.stringify(formValue())});
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.detail || "The release brief needs valid fields.");
+    }
     lastDecision = await response.json();
     render(lastDecision);
     get("download").disabled = false;
