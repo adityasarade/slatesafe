@@ -91,6 +91,11 @@ The [competition audit and video runbook](docs/COMPETITION-AUDIT.md) maps the
 functional product to the Agentic Cinema ClickHouse-track requirements and
 keeps the production claims evidence-based.
 
+The [final demo and submission runbook](docs/FINAL-DEMO-AND-SUBMISSION.md)
+contains the exact evidence gates, 2:45 recording script, and factual Devpost
+checklist. It distinguishes the public visitor-BYOK safety path from a genuine
+recorded Google runtime proof.
+
 The submission thumbnail is an original, code-rendered SVG in `assets/`; no
 non-Google generative AI is used by SlateSafe.
 
