@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from slatesafe import agent
 from slatesafe import app as web
 from slatesafe.agent import build_release_agent, deterministic_release_check
-from slatesafe.app import app
+from slatesafe.app import _public_request_times, app
 from slatesafe.models import EvidenceMode, ReleaseCheckRequest, Severity
 
 REQUEST = {
@@ -87,3 +87,30 @@ def test_public_byok_forwards_key_without_returning_or_persisting_it(monkeypatch
     assert response.status_code == 200
     assert received == [visitor_key]
     assert visitor_key not in response.text
+
+
+def test_public_byok_budget_stops_ledger_calls_before_evaluation(monkeypatch) -> None:
+    _public_request_times.clear()
+    monkeypatch.setenv("SLATESAFE_LIVE_GEMINI", "true")
+    monkeypatch.setenv("SLATESAFE_PUBLIC_BYOK", "true")
+    monkeypatch.setenv("SLATESAFE_PUBLIC_REQUESTS_PER_HOUR", "1")
+    calls = 0
+
+    async def fake_evaluate(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        return deterministic_release_check(ReleaseCheckRequest(**REQUEST))
+
+    monkeypatch.setattr(web, "evaluate_release_check", fake_evaluate)
+    client = TestClient(app)
+    first = client.post(
+        "/api/release-check", json=REQUEST, headers={"X-SlateSafe-Gemini-Key": "a" * 30}
+    )
+    second = client.post(
+        "/api/release-check", json=REQUEST, headers={"X-SlateSafe-Gemini-Key": "b" * 30}
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 429
+    assert calls == 1
+    _public_request_times.clear()
